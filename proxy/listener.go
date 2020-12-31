@@ -11,28 +11,33 @@ import (
 	"github.com/Dreamacro/clash/proxy/mixed"
 	"github.com/Dreamacro/clash/proxy/redir"
 	"github.com/Dreamacro/clash/proxy/socks"
+	"github.com/Dreamacro/clash/proxy/shadowsocks"
+	"github.com/Dreamacro/go-shadowsocks2/core"
 )
 
 var (
 	allowLan    = false
 	bindAddress = "*"
 
-	socksListener     *socks.SockListener
-	socksUDPListener  *socks.SockUDPListener
-	httpListener      *http.HttpListener
-	redirListener     *redir.RedirListener
-	redirUDPListener  *redir.RedirUDPListener
-	tproxyListener    *redir.TProxyListener
-	tproxyUDPListener *redir.RedirUDPListener
-	mixedListener     *mixed.MixedListener
-	mixedUDPLister    *socks.SockUDPListener
+	socksListener          *socks.SockListener
+	socksUDPListener       *socks.SockUDPListener
+	shadowsocksListener    *shadowsocks.ShadowSockListener
+	shadowsocksUDPListener *shadowsocks.ShadowSockUDPListener
+	httpListener           *http.HttpListener
+	redirListener          *redir.RedirListener
+	redirUDPListener       *redir.RedirUDPListener
+	tproxyListener         *redir.TProxyListener
+	tproxyUDPListener      *redir.RedirUDPListener
+	mixedListener          *mixed.MixedListener
+	mixedUDPLister         *socks.SockUDPListener
 
 	// lock for recreate function
-	socksMux  sync.Mutex
-	httpMux   sync.Mutex
-	redirMux  sync.Mutex
-	tproxyMux sync.Mutex
-	mixedMux  sync.Mutex
+	socksMux       sync.Mutex
+	httpMux        sync.Mutex
+	redirMux       sync.Mutex
+	tproxyMux      sync.Mutex
+	mixedMux       sync.Mutex
+	shadowsocksMux sync.Mutex
 )
 
 type Ports struct {
@@ -263,6 +268,63 @@ func ReCreateMixed(port int) error {
 		mixedListener.Close()
 		return err
 	}
+
+	return nil
+}
+
+func ReCreateShadowSocks(port int, method string, password string) error {
+	shadowsocksMux.Lock()
+	defer shadowsocksMux.Unlock()
+
+	addr := genAddr(bindAddress, port, allowLan)
+
+	shouldTCPIgnore := false
+	shouldUDPIgnore := false
+
+	if shadowsocksListener != nil {
+		if shadowsocksListener.Address() != addr {
+			shadowsocksListener.Close()
+			shadowsocksListener = nil
+		} else {
+			shouldTCPIgnore = true
+		}
+	}
+
+	if shadowsocksUDPListener != nil {
+		if shadowsocksUDPListener.Address() != addr {
+			shadowsocksUDPListener.Close()
+			shadowsocksUDPListener = nil
+		} else {
+			shouldUDPIgnore = true
+		}
+	}
+
+	if shouldTCPIgnore && shouldUDPIgnore {
+		return nil
+	}
+
+	if portIsZero(addr) {
+		return nil
+	}
+
+	cipher, err := core.PickCipher(method, nil, password)
+	if err != nil {
+		return err
+	}
+
+	tcpListener, err := shadowsocks.NewShadowSocksProxy(addr, cipher)
+	if err != nil {
+		return err
+	}
+
+	udpListener, err := shadowsocks.NewShadowSocksUDPProxy(addr, cipher)
+	if err != nil {
+		tcpListener.Close()
+		return err
+	}
+
+	shadowsocksListener = tcpListener
+	shadowsocksUDPListener = udpListener
 
 	return nil
 }
