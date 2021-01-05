@@ -35,14 +35,17 @@ type General struct {
 
 // Inbound
 type Inbound struct {
-	Port           int      `json:"port"`
-	SocksPort      int      `json:"socks-port"`
-	RedirPort      int      `json:"redir-port"`
-	TProxyPort     int      `json:"tproxy-port"`
-	MixedPort      int      `json:"mixed-port"`
-	Authentication []string `json:"authentication"`
-	AllowLan       bool     `json:"allow-lan"`
-	BindAddress    string   `json:"bind-address"`
+	Port                int      `json:"port"`
+	SocksPort           int      `json:"socks-port"`
+	RedirPort           int      `json:"redir-port"`
+	TProxyPort          int      `json:"tproxy-port"`
+	MixedPort           int      `json:"mixed-port"`
+	ShadowSocksPort     int      `json:"shadowsocks-port"`
+	ShadowSocksMethod   string   `json:"shadowsocks-method"`
+	ShadowSocksPassword string   `json:"shadowsocks-password"`
+	Authentication      []string `json:"authentication"`
+	AllowLan            bool     `json:"allow-lan"`
+	BindAddress         string   `json:"bind-address"`
 }
 
 // Controller
@@ -109,21 +112,24 @@ type RawFallbackFilter struct {
 }
 
 type RawConfig struct {
-	Port               int          `yaml:"port"`
-	SocksPort          int          `yaml:"socks-port"`
-	RedirPort          int          `yaml:"redir-port"`
-	TProxyPort         int          `yaml:"tproxy-port"`
-	MixedPort          int          `yaml:"mixed-port"`
-	Authentication     []string     `yaml:"authentication"`
-	AllowLan           bool         `yaml:"allow-lan"`
-	BindAddress        string       `yaml:"bind-address"`
-	Mode               T.TunnelMode `yaml:"mode"`
-	LogLevel           log.LogLevel `yaml:"log-level"`
-	IPv6               bool         `yaml:"ipv6"`
-	ExternalController string       `yaml:"external-controller"`
-	ExternalUI         string       `yaml:"external-ui"`
-	Secret             string       `yaml:"secret"`
-	Interface          string       `yaml:"interface-name"`
+	Port                int          `yaml:"port"`
+	SocksPort           int          `yaml:"socks-port"`
+	RedirPort           int          `yaml:"redir-port"`
+	TProxyPort          int          `yaml:"tproxy-port"`
+	MixedPort           int          `yaml:"mixed-port"`
+	ShadowSocksPort     int          `yaml:"shadowsocks-port"`
+	ShadowSocksMethod   string       `yaml:"shadowsocks-method"`
+	ShadowSocksPassword string       `yaml:"shadowsocks-password"`
+	Authentication      []string     `yaml:"authentication"`
+	AllowLan            bool         `yaml:"allow-lan"`
+	BindAddress         string       `yaml:"bind-address"`
+	Mode                T.TunnelMode `yaml:"mode"`
+	LogLevel            log.LogLevel `yaml:"log-level"`
+	IPv6                bool         `yaml:"ipv6"`
+	ExternalController  string       `yaml:"external-controller"`
+	ExternalUI          string       `yaml:"external-ui"`
+	Secret              string       `yaml:"secret"`
+	Interface           string       `yaml:"interface-name"`
 
 	ProxyProvider map[string]map[string]interface{} `yaml:"proxy-providers"`
 	Hosts         map[string]string                 `yaml:"hosts"`
@@ -233,13 +239,16 @@ func parseGeneral(cfg *RawConfig) (*General, error) {
 
 	return &General{
 		Inbound: Inbound{
-			Port:        cfg.Port,
-			SocksPort:   cfg.SocksPort,
-			RedirPort:   cfg.RedirPort,
-			TProxyPort:  cfg.TProxyPort,
-			MixedPort:   cfg.MixedPort,
-			AllowLan:    cfg.AllowLan,
-			BindAddress: cfg.BindAddress,
+			Port:                cfg.Port,
+			SocksPort:           cfg.SocksPort,
+			RedirPort:           cfg.RedirPort,
+			TProxyPort:          cfg.TProxyPort,
+			MixedPort:           cfg.MixedPort,
+			ShadowSocksPort:     cfg.ShadowSocksPort,
+			ShadowSocksMethod:   cfg.ShadowSocksMethod,
+			ShadowSocksPassword: cfg.ShadowSocksPassword,
+			AllowLan:            cfg.AllowLan,
+			BindAddress:         cfg.BindAddress,
 		},
 		Controller: Controller{
 			ExternalController: cfg.ExternalController,
